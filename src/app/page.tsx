@@ -1,5 +1,4 @@
 // app/page.tsx (Server Component)
-import ClientOverlay from '@/components/ClientOverlay';
 import { getNowDate } from '@/lib/date';
 import { generateColorForDate } from '@/lib/generateColor';
 import { getCloudflareContext } from '@opennextjs/cloudflare';

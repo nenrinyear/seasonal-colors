@@ -16,7 +16,6 @@ export default async function Page() {
   }
   return (
     <main className="w-screen h-screen flex items-center justify-center" style={{ background: hex }}>
-      <ClientOverlay bg={hex} />
       <div className="text-white text-4xl font-mono">{hex}</div>
     </main>
   );

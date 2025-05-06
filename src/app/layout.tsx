@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Sans_JP } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const ibmPlexSansJp = IBM_Plex_Sans_JP({
+  weight: ["400", "700"],
+  subsets: ["latin", "latin-ext"],
+})
 
 export const metadata: Metadata = {
   title: "A Color a Day",
@@ -23,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${ibmPlexSansJp.className} antialiased`}
       >
         {children}
       </body>

@@ -96,7 +96,7 @@ export function generateColorForDate(date: Date): string {
     const tGlobal = monthFrac * (pts.length - 1);
     const [h, s, l] = catmullRomSpline(pts, tGlobal);
 
-    // 大胆な乱数ノイズを追加
+    // ノイズを追加
     const hueNoise = (rng() * 2 - 1) * 20;   // ±20度
     const satNoise = (rng() * 2 - 1) * 0.1;  // ±0.1
     const ligNoise = (rng() * 2 - 1) * 0.1;  // ±0.1
@@ -109,4 +109,86 @@ export function generateColorForDate(date: Date): string {
     const { r, g, b } = hslToRgb(h2, s2, l2);
     const toHex = (v: number) => v.toString(16).padStart(2, '0');
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+/**
+ * 色の詳細情報を返す
+ */
+export function getColorInfo(hex: string, date: Date) {
+    // hex を RGB に変換
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    
+    // RGB から HSL に変換
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+    
+    const max = Math.max(rNorm, gNorm, bNorm);
+    const min = Math.min(rNorm, gNorm, bNorm);
+    const diff = max - min;
+    
+    let h = 0;
+    if (diff !== 0) {
+        if (max === rNorm) {
+            h = ((gNorm - bNorm) / diff) % 6;
+        } else if (max === gNorm) {
+            h = (bNorm - rNorm) / diff + 2;
+        } else {
+            h = (rNorm - gNorm) / diff + 4;
+        }
+    }
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+        const l = (max + min) / 2;
+    const s = diff === 0 ? 0 : diff / (1 - Math.abs(2 * l - 1));
+    
+    // 月間ベース値を計算
+    const monthlyBases = computeMonthlyBases();
+    const currentMonth = date.getMonth();
+    const currentMonthBase = monthlyBases[currentMonth];
+    
+    return {
+        hex,
+        rgb: { r, g, b },
+        hsl: { h, s: Math.round(s * 100), l: Math.round(l * 100) },
+        date: date.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }),
+        season: getSeason(date.getMonth() + 1),
+        monthlyBase: {
+            hue: Math.round(currentMonthBase.h),
+            saturation: Math.round(currentMonthBase.s * 100),
+            lightness: Math.round(currentMonthBase.l * 100),
+            description: getMonthColorDescription(date.getMonth() + 1)
+        }
+    };
+}
+
+function getSeason(month: number): string {
+    if (month >= 3 && month <= 5) return '春';
+    if (month >= 6 && month <= 8) return '夏';
+    if (month >= 9 && month <= 11) return '秋';
+    return '冬';
+}
+
+function getMonthColorDescription(month: number): string {
+    const descriptions: Record<number, string> = {
+        1: '白系 - 雪景色のような純白から始まる新年',
+        2: '白～ピンク系 - 梅の花が咲く時期への移行',
+        3: 'ピンク系 - 桜の季節、春の始まり',
+        4: 'ピンク～黄緑系 - 新緑への移り変わり',
+        5: '黄緑系 - 若葉が美しい初夏',
+        6: '黄緑～水色系 - 梅雨から夏への移行',
+        7: '水色系 - 夏の空と海を表現',
+        8: '水色～オレンジ系 - 夕焼けの美しい晩夏',
+        9: 'オレンジ系 - 紅葉の始まり、秋の訪れ',
+        10: 'オレンジ～青系 - 深まる秋の色合い',
+        11: '青系 - 澄んだ秋空から冬への準備',
+        12: '青～白系 - 冬の到来、雪の季節へ'
+    };
+    return descriptions[month] || '';
 }

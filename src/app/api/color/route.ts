@@ -13,5 +13,5 @@ export async function GET() {
         hex = generateColorForDate(getNowDate());
         await env.seasonal_colors.put(key, hex, { expirationTtl: 86400 });
     }
-    return new Response(hex);
+    return Response.json({ hex });
 }

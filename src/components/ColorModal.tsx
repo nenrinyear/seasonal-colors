@@ -19,10 +19,11 @@ interface ColorInfo {
 interface ColorModalProps {
     isOpen: boolean;
     colorInfo: ColorInfo;
+    intentUrl: string;
     onClose: () => void;
 }
 
-export default function ColorModal({ isOpen, colorInfo, onClose }: ColorModalProps) {
+export default function ColorModal({ isOpen, colorInfo, intentUrl, onClose }: ColorModalProps) {
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -87,6 +88,17 @@ export default function ColorModal({ isOpen, colorInfo, onClose }: ColorModalPro
                         <p className="text-xs font-bold text-gray-500">季節のベース</p>
                         <p className="mt-1 text-sm text-gray-700">{colorInfo.monthlyBase.description}</p>
                     </div>
+                </div>
+
+                <div className="mt-5">
+                    <a
+                        href={intentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-lg bg-gray-950 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    >
+                        Xにポスト
+                    </a>
                 </div>
             </section>
         </div>

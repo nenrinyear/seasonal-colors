@@ -8,8 +8,37 @@ const ibmPlexSansJp = IBM_Plex_Sans_JP({
 })
 
 export const metadata: Metadata = {
-  title: "A Color a Day",
-  description: "四季に応じて変化する色を毎日お届けします。",
+  metadataBase: new URL("https://color.nenrin.me"),
+  title: {
+    default: "color.nenrin.me",
+    template: "%s | color.nenrin.me",
+  },
+  description: "日付と季節から、その日の色を表示します。",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "color.nenrin.me",
+    description: "日付と季節から、その日の色を表示します。",
+    url: "/",
+    siteName: "color.nenrin.me",
+    type: "website",
+    locale: "ja_JP",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "color.nenrin.me",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "color.nenrin.me",
+    description: "日付と季節から、その日の色を表示します。",
+    images: ["/icon.png"],
+  },
 };
 
 export default function RootLayout({

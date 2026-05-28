@@ -20,10 +20,12 @@ interface ColorModalProps {
     isOpen: boolean;
     colorInfo: ColorInfo;
     intentUrl: string;
+    copied: boolean;
+    onCopy: () => void;
     onClose: () => void;
 }
 
-export default function ColorModal({ isOpen, colorInfo, intentUrl, onClose }: ColorModalProps) {
+export default function ColorModal({ isOpen, colorInfo, intentUrl, copied, onCopy, onClose }: ColorModalProps) {
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -90,12 +92,19 @@ export default function ColorModal({ isOpen, colorInfo, intentUrl, onClose }: Co
                     </div>
                 </div>
 
-                <div className="mt-5">
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={onCopy}
+                        className="rounded-lg bg-gray-100 px-4 py-3 text-sm font-bold text-gray-900 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    >
+                        {copied ? 'コピー済み' : 'コピー'}
+                    </button>
                     <a
                         href={intentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block rounded-lg bg-gray-950 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="rounded-lg bg-gray-950 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400"
                     >
                         Xにポスト
                     </a>

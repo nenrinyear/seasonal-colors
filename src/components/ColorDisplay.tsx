@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createTweetText, SITE_URL } from '@/lib/share';
 
 interface ColorInfo {
     hex: string;
@@ -27,11 +28,11 @@ export default function ColorDisplay({ hex, colorInfo }: ColorDisplayProps) {
     const isLightBackground = foregroundColor === '#171717';
 
     const postText = useMemo(() => {
-        return `${colorInfo.date}の色は${hex}です | color.nenrin.me`;
+        return createTweetText(colorInfo.date, hex);
     }, [colorInfo.date, hex]);
 
     const intentUrl = useMemo(() => {
-        const params = new URLSearchParams({ text: postText });
+        const params = new URLSearchParams({ text: postText, url: SITE_URL });
         return `https://twitter.com/intent/tweet?${params.toString()}`;
     }, [postText]);
 

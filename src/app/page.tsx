@@ -2,15 +2,24 @@
 import type { Metadata } from 'next';
 import ColorDisplay from '@/components/ColorDisplay';
 import { getDailyColor } from '@/lib/dailyColor';
+import { getNowDate } from '@/lib/date';
 import { getColorInfo } from '@/lib/generateColor';
+import { normalizeHexColor } from '@/lib/hexColor';
+import { createColorPath } from '@/lib/share';
 
 export const revalidate = 86400; // 1 日キャッシュ
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { date, hex } = await getDailyColor();
+type SearchParams = Record<string, string | string[] | undefined>;
+type PageProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
+  const { date, hex, isPermalink } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
-  const title = `${colorInfo.date}の色は${hex}`;
+  const title = isPermalink ? `${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
   const imageUrl = `/api/og?hex=${encodeURIComponent(hex)}`;
+  const pageUrl = isPermalink ? createColorPath(hex) : '/';
 
   return {
     title,
@@ -18,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title,
       description: '日付と季節から、その日の色を表示します。',
-      url: '/',
+      url: pageUrl,
       images: [
         {
           url: imageUrl,
@@ -37,9 +46,23 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function Page() {
-  const { date, hex } = await getDailyColor();
+export default async function Page({ searchParams }: PageProps) {
+  const { date, hex } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
   
   return <ColorDisplay hex={hex} colorInfo={colorInfo} />;
+}
+
+async function getPageColor(searchParams?: PageProps['searchParams']) {
+  const requestedHex = normalizeHexColor(getSearchParamValue((await searchParams)?.hex));
+
+  if (requestedHex) {
+    return { date: getNowDate(), hex: requestedHex, isPermalink: true };
+  }
+
+  return { ...(await getDailyColor()), isPermalink: false };
+}
+
+function getSearchParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { createTweetText, SITE_URL } from '@/lib/share';
+import { createColorUrl, createTweetText } from '@/lib/share';
 
 interface ColorInfo {
     hex: string;
@@ -32,9 +32,9 @@ export default function ColorDisplay({ hex, colorInfo }: ColorDisplayProps) {
     }, [colorInfo.date, hex]);
 
     const intentUrl = useMemo(() => {
-        const params = new URLSearchParams({ text: postText, url: SITE_URL });
+        const params = new URLSearchParams({ text: postText, url: createColorUrl(hex) });
         return `https://twitter.com/intent/tweet?${params.toString()}`;
-    }, [postText]);
+    }, [hex, postText]);
 
     useEffect(() => {
         if (!copied) return;

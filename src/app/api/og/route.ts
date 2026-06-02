@@ -1,8 +1,6 @@
 import { normalizeHexColor } from '@/lib/hexColor';
 import { createSolidColorPng } from '@/lib/png';
 
-export const runtime = 'edge';
-
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 630;
 

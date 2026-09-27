@@ -18,7 +18,7 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
   const { date, hex, isPermalink } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
   const title = isPermalink ? `${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
-  const imageUrl = `/api/og?hex=${encodeURIComponent(hex)}`;
+  const imageUrl = `/api/og?hex=${hex.slice(1)}`;
   const pageUrl = isPermalink ? createColorPath(hex) : '/';
 
   return {

@@ -1,11 +1,16 @@
 const HEX_COLOR_PATTERN = /^#?[0-9a-fA-F]{6}$/;
 
 export function normalizeHexColor(value: string | null | undefined): string | null {
-    if (!value || !HEX_COLOR_PATTERN.test(value)) {
+    if (!value) {
         return null;
     }
 
-    const hex = value.startsWith('#') ? value : `#${value}`;
+    const normalizedValue = value.trim().replace(/^(?:%25)*%?23/i, '#');
+    if (!HEX_COLOR_PATTERN.test(normalizedValue)) {
+        return null;
+    }
+
+    const hex = normalizedValue.startsWith('#') ? normalizedValue : `#${normalizedValue}`;
     return hex.toLowerCase();
 }
 

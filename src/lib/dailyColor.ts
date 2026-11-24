@@ -1,12 +1,12 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { getJapanDateKey } from '@/lib/date';
+import { getJapanDateKey, getNowDate, parseJapanDateKey } from '@/lib/date';
 import { generateColorForDate } from '@/lib/generateColor';
 import { normalizeHexColor } from '@/lib/hexColor';
 
 const DAILY_PREFIX = 'daily:';
 const KV_BATCH_SIZE = 100;
 
-export async function getDailyColor(date = new Date()) {
+export async function getDailyColor(date = getNowDate()) {
     const key = `${DAILY_PREFIX}${getJapanDateKey(date)}`;
     const { env: { seasonal_colors: kv } } = await getCloudflareContext({ async: true });
     let hex = await kv.get(key);
@@ -53,5 +53,5 @@ export async function getDailyColorByHex(hex: string) {
 }
 
 function dateFromDailyKey(key: string) {
-    return new Date(`${key.slice(DAILY_PREFIX.length)}T00:00:00+09:00`);
+    return parseJapanDateKey(key.slice(DAILY_PREFIX.length));
 }

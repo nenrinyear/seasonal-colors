@@ -78,17 +78,16 @@ export default function ColorDisplay({ hex, rgb, heading, intentUrl, isPermalink
                         今日の色を見る <span aria-hidden="true">→</span>
                     </Link>
                 )}
-                <a
-                    href={intentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <button
+                    type="button"
+                    onClick={() => window.open(intentUrl, '_blank', 'noopener,noreferrer')}
                     className={isPermalink
-                        ? 'mt-2 rounded px-4 py-3 text-sm font-bold underline underline-offset-4 focus-visible:outline-2'
-                        : 'mt-6 rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white/80'}
+                        ? 'mt-2 cursor-pointer rounded px-4 py-3 text-sm font-bold underline underline-offset-4 focus-visible:outline-2'
+                        : 'mt-6 cursor-pointer rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white/80'}
                     style={isPermalink ? { color: foregroundColor } : undefined}
                 >
                     Xにポスト
-                </a>
+                </button>
             </div>
         </main>
     );

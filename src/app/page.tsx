@@ -18,9 +18,7 @@ type PageProps = {
 export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
   const { dateLabel, hex, isPermalink } = await getPageColor(searchParams);
   const title = `${dateLabel}の色は${hex}`;
-  const description = isPermalink
-    ? '日付と季節から生まれる、日替わりの色。'
-    : '日付と季節から、その日の色を表示します。';
+  const description = '日付と季節から、その日の色を表示します。';
   const imageUrl = `/api/og?hex=${hex.slice(1)}`;
   const pageUrl = isPermalink ? createColorPath(hex) : '/';
 

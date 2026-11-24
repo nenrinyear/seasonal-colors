@@ -30,8 +30,8 @@ export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDispl
     const isLightBackground = foregroundColor === '#171717';
 
     const postText = useMemo(() => {
-        return createTweetText(isPermalink ? null : colorInfo.date, hex);
-    }, [colorInfo.date, hex, isPermalink]);
+        return createTweetText(colorInfo.date, hex);
+    }, [colorInfo.date, hex]);
 
     const intentUrl = useMemo(() => {
         const params = new URLSearchParams({ text: postText, url: createColorUrl(hex) });
@@ -75,7 +75,7 @@ export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDispl
                     className="mb-5 text-sm font-bold"
                     style={{ color: foregroundColor }}
                 >
-                    {isPermalink ? '共有された色' : '今日の色'}
+                    {isPermalink ? `${colorInfo.date}の色` : '今日の色'}
                 </h1>
                 <button
                     type="button"

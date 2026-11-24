@@ -1,8 +1,9 @@
 // app/page.tsx (Server Component)
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import ColorDisplay from '@/components/ColorDisplay';
-import { getDailyColor } from '@/lib/dailyColor';
-import { getNowDate } from '@/lib/date';
+import { getDailyColor, getDailyColorByHex } from '@/lib/dailyColor';
 import { getColorInfo } from '@/lib/generateColor';
 import { normalizeHexColor } from '@/lib/hexColor';
 import { createColorPath } from '@/lib/share';
@@ -17,7 +18,7 @@ type PageProps = {
 export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
   const { date, hex, isPermalink } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
-  const title = isPermalink ? `共有された色 ${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
+  const title = `${colorInfo.date}の色は${hex}`;
   const description = isPermalink
     ? '共有された色を表示します。今日の色も見ることができます。'
     : '日付と季節から、その日の色を表示します。';
@@ -57,15 +58,20 @@ export default async function Page({ searchParams }: PageProps) {
 }
 
 async function getPageColor(searchParams?: PageProps['searchParams']) {
-  const requestedHex = normalizeHexColor(getSearchParamValue((await searchParams)?.hex));
+  const query = (await searchParams)?.hex;
+  return resolvePageColor(Array.isArray(query) ? query[0] : query);
+}
 
-  if (requestedHex) {
-    return { date: getNowDate(), hex: requestedHex, isPermalink: true };
+const resolvePageColor = cache(async (query: string | undefined) => {
+  if (query === undefined) {
+    return { ...(await getDailyColor()), isPermalink: false };
   }
 
-  return { ...(await getDailyColor()), isPermalink: false };
-}
+  const hex = normalizeHexColor(query);
+  if (!hex) notFound();
 
-function getSearchParamValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+  const color = await getDailyColorByHex(hex);
+  if (!color) notFound();
+
+  return { ...color, isPermalink: true };
+});

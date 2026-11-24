@@ -1,42 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { createColorUrl, createTweetText } from '@/lib/share';
-
-interface ColorInfo {
-    hex: string;
-    rgb: { r: number; g: number; b: number };
-    hsl: { h: number; s: number; l: number };
-    date: string;
-    season: string;
-    monthlyBase: {
-        hue: number;
-        saturation: number;
-        lightness: number;
-        description: string;
-    };
-}
+import { useEffect, useState } from 'react';
 
 interface ColorDisplayProps {
     hex: string;
-    colorInfo: ColorInfo;
+    rgb: { r: number; g: number; b: number };
+    heading: string;
+    intentUrl: string;
     isPermalink: boolean;
 }
 
-export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDisplayProps) {
+export default function ColorDisplay({ hex, rgb, heading, intentUrl, isPermalink }: ColorDisplayProps) {
     const [copied, setCopied] = useState(false);
-    const foregroundColor = getReadableTextColor(colorInfo.rgb);
+    const foregroundColor = getReadableTextColor(rgb);
     const isLightBackground = foregroundColor === '#171717';
-
-    const postText = useMemo(() => {
-        return createTweetText(colorInfo.date, hex);
-    }, [colorInfo.date, hex]);
-
-    const intentUrl = useMemo(() => {
-        const params = new URLSearchParams({ text: postText, url: createColorUrl(hex) });
-        return `https://twitter.com/intent/tweet?${params.toString()}`;
-    }, [hex, postText]);
 
     useEffect(() => {
         if (!copied) return;
@@ -75,7 +53,7 @@ export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDispl
                     className="mb-5 text-sm font-bold"
                     style={{ color: foregroundColor }}
                 >
-                    {isPermalink ? `${colorInfo.date}の色` : '今日の色'}
+                    {heading}
                 </h1>
                 <button
                     type="button"
@@ -116,7 +94,7 @@ export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDispl
     );
 }
 
-function getReadableTextColor(rgb: ColorInfo['rgb']) {
+function getReadableTextColor(rgb: ColorDisplayProps['rgb']) {
     const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
     return luminance > 0.62 ? '#171717' : '#ffffff';
 }

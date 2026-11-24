@@ -8,12 +8,12 @@ const KV_BATCH_SIZE = 100;
 
 export async function getDailyColor(date = getNowDate()) {
     const key = `${DAILY_PREFIX}${date.toISOString().slice(0, 10)}`;
-    const { env } = await getCloudflareContext({ async: true });
-    let hex = await env.seasonal_colors.get(key);
+    const { env: { seasonal_colors: kv } } = await getCloudflareContext({ async: true });
+    let hex = await kv.get(key);
 
     if (!hex) {
         hex = generateColorForDate(date);
-        await env.seasonal_colors.put(key, hex, { metadata: { hex } });
+        await kv.put(key, hex, { metadata: { hex } });
     }
 
     return { date, hex, key };
@@ -21,34 +21,37 @@ export async function getDailyColor(date = getNowDate()) {
 
 export async function getDailyColorByHex(hex: string) {
     const { env: { seasonal_colors: kv } } = await getCloudflareContext({ async: true });
-    let latestKey: string | undefined;
+    let latestMetadataMatch: string | undefined;
     let cursor: string | undefined;
+    const legacyKeys: string[] = [];
 
     do {
         const page = await kv.list<{ hex: string }>({ prefix: DAILY_PREFIX, cursor });
-        const legacyKeys: string[] = [];
 
+        // KV lists ISO-date keys in ascending order. Older entries cannot beat a known match.
         for (const { name, metadata } of page.keys) {
             if (!metadata?.hex) {
                 legacyKeys.push(name);
-            } else if (normalizeHexColor(metadata.hex) === hex && (!latestKey || name > latestKey)) {
-                latestKey = name;
+            } else if (normalizeHexColor(metadata.hex) === hex) {
+                latestMetadataMatch = name;
+                legacyKeys.length = 0;
             }
-        }
-
-        // Older daily entries only store the HEX in the value.
-        for (let end = legacyKeys.length; end > 0; end -= KV_BATCH_SIZE) {
-            const batch = legacyKeys.slice(Math.max(0, end - KV_BATCH_SIZE), end);
-            if (latestKey && batch[batch.length - 1] <= latestKey) break;
-
-            const colors = await kv.get(batch, 'text');
-            const match = batch.findLast((key) => normalizeHexColor(colors.get(key)) === hex);
-            if (match && (!latestKey || match > latestKey)) latestKey = match;
         }
 
         cursor = page.list_complete ? undefined : page.cursor;
     } while (cursor);
 
-    if (!latestKey) return null;
-    return { date: new Date(latestKey.slice(DAILY_PREFIX.length)), hex };
+    // Legacy entries store HEX only in the value. Fetch the newest batches first.
+    for (let end = legacyKeys.length; end > 0; end -= KV_BATCH_SIZE) {
+        const batch = legacyKeys.slice(Math.max(0, end - KV_BATCH_SIZE), end);
+        const colors = await kv.get(batch, 'text');
+        const match = batch.findLast((key) => normalizeHexColor(colors.get(key)) === hex);
+        if (match) return { date: dateFromDailyKey(match), hex };
+    }
+
+    return latestMetadataMatch ? { date: dateFromDailyKey(latestMetadataMatch), hex } : null;
+}
+
+function dateFromDailyKey(key: string) {
+    return new Date(key.slice(DAILY_PREFIX.length));
 }

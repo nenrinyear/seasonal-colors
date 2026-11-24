@@ -6,7 +6,7 @@ import ColorDisplay from '@/components/ColorDisplay';
 import { getDailyColor, getDailyColorByHex } from '@/lib/dailyColor';
 import { getColorInfo } from '@/lib/generateColor';
 import { normalizeHexColor } from '@/lib/hexColor';
-import { createColorPath } from '@/lib/share';
+import { createColorPath, createTweetIntentUrl } from '@/lib/share';
 
 export const revalidate = 86400; // 1 日キャッシュ
 
@@ -16,9 +16,8 @@ type PageProps = {
 };
 
 export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
-  const { date, hex, isPermalink } = await getPageColor(searchParams);
-  const colorInfo = getColorInfo(hex, date);
-  const title = `${colorInfo.date}の色は${hex}`;
+  const { dateLabel, hex, isPermalink } = await getPageColor(searchParams);
+  const title = `${dateLabel}の色は${hex}`;
   const description = isPermalink
     ? '共有された色を表示します。今日の色も見ることができます。'
     : '日付と季節から、その日の色を表示します。';
@@ -51,10 +50,17 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { date, hex, isPermalink } = await getPageColor(searchParams);
-  const colorInfo = getColorInfo(hex, date);
-  
-  return <ColorDisplay hex={hex} colorInfo={colorInfo} isPermalink={isPermalink} />;
+  const { dateLabel, hex, rgb, isPermalink } = await getPageColor(searchParams);
+
+  return (
+    <ColorDisplay
+      hex={hex}
+      rgb={rgb}
+      heading={isPermalink ? `${dateLabel}の色` : '今日の色'}
+      intentUrl={createTweetIntentUrl(dateLabel, hex)}
+      isPermalink={isPermalink}
+    />
+  );
 }
 
 async function getPageColor(searchParams?: PageProps['searchParams']) {
@@ -64,7 +70,8 @@ async function getPageColor(searchParams?: PageProps['searchParams']) {
 
 const resolvePageColor = cache(async (query: string | undefined) => {
   if (query === undefined) {
-    return { ...(await getDailyColor()), isPermalink: false };
+    const { date, hex } = await getDailyColor();
+    return toPageColor(hex, date, false);
   }
 
   const hex = normalizeHexColor(query);
@@ -73,5 +80,10 @@ const resolvePageColor = cache(async (query: string | undefined) => {
   const color = await getDailyColorByHex(hex);
   if (!color) notFound();
 
-  return { ...color, isPermalink: true };
+  return toPageColor(color.hex, color.date, true);
 });
+
+function toPageColor(hex: string, date: Date, isPermalink: boolean) {
+  const { date: dateLabel, rgb } = getColorInfo(hex, date);
+  return { hex, dateLabel, rgb, isPermalink };
+}

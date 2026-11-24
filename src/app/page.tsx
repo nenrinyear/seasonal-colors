@@ -47,10 +47,10 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { date, hex } = await getPageColor(searchParams);
+  const { date, hex, isPermalink } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
   
-  return <ColorDisplay hex={hex} colorInfo={colorInfo} />;
+  return <ColorDisplay hex={hex} colorInfo={colorInfo} isPermalink={isPermalink} />;
 }
 
 async function getPageColor(searchParams?: PageProps['searchParams']) {

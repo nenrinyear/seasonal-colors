@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createColorUrl, createTweetText } from '@/lib/share';
 
@@ -20,9 +21,10 @@ interface ColorInfo {
 interface ColorDisplayProps {
     hex: string;
     colorInfo: ColorInfo;
+    isPermalink: boolean;
 }
 
-export default function ColorDisplay({ hex, colorInfo }: ColorDisplayProps) {
+export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDisplayProps) {
     const [copied, setCopied] = useState(false);
     const foregroundColor = getReadableTextColor(colorInfo.rgb);
     const isLightBackground = foregroundColor === '#171717';
@@ -69,12 +71,12 @@ export default function ColorDisplay({ hex, colorInfo }: ColorDisplayProps) {
             style={{ background: hex }}
         >
             <div className="flex flex-col items-center text-center">
-                <p
+                <h1
                     className="mb-5 text-sm font-bold"
                     style={{ color: foregroundColor }}
                 >
-                    color.nenrin.me
-                </p>
+                    {isPermalink ? '共有された色' : '今日の色'}
+                </h1>
                 <button
                     type="button"
                     onClick={copyColor}
@@ -88,11 +90,24 @@ export default function ColorDisplay({ hex, colorInfo }: ColorDisplayProps) {
                 }`}>
                     {copied ? 'コピーしました' : 'HEXをクリックしてコピー'}
                 </p>
+                {isPermalink && (
+                    <Link
+                        href="/"
+                        prefetch={false}
+                        className="mt-6 rounded-full bg-gray-950 px-6 py-3 text-sm font-bold text-white ring-1 ring-white/50 transition hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-4"
+                        style={{ outlineColor: foregroundColor }}
+                    >
+                        今日の色を見る <span aria-hidden="true">→</span>
+                    </Link>
+                )}
                 <a
                     href={intentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-6 rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white/80"
+                    className={isPermalink
+                        ? 'mt-2 rounded px-4 py-3 text-sm font-bold underline underline-offset-4 focus-visible:outline-2'
+                        : 'mt-6 rounded-full bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white/80'}
+                    style={isPermalink ? { color: foregroundColor } : undefined}
                 >
                     Xにポスト
                 </a>

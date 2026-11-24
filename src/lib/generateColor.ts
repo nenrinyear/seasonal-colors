@@ -1,5 +1,5 @@
 import seedrandom from 'seedrandom';
-import { getNowDate } from './date';
+import { getJapanDateKey, JAPAN_TIME_ZONE } from './date';
 
 export type HSL = { h: number; s: number; l: number };
 
@@ -14,7 +14,7 @@ const BASE_POINTS: Record<number, HSL> = {
 };
 
 function daysInMonth(year: number, month: number): number {
-    return getNowDate(year, month, 0).getDate();
+    return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 function computeMonthlyBases(): HSL[] {
@@ -82,12 +82,10 @@ function catmullRomSpline(
  */
 export function generateColorForDate(date: Date): string {
     // RNG を日付でシード化
-    const seed = date.toISOString().slice(0, 10);
+    const seed = getJapanDateKey(date);
     const rng = seedrandom(seed);
 
-    const year  = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day   = date.getDate();
+    const [year, month, day] = seed.split('-').map(Number);
     const dim   = daysInMonth(year, month);
     const monthFrac = ((month - 1) + (day - 1) / dim) / 12;
 
@@ -146,7 +144,7 @@ export function getColorInfo(hex: string, date: Date) {
     
     // 月間ベース値を計算
     const monthlyBases = computeMonthlyBases();
-    const currentMonth = date.getMonth();
+    const currentMonth = Number(getJapanDateKey(date).slice(5, 7)) - 1;
     const currentMonthBase = monthlyBases[currentMonth];
     
     return {
@@ -154,16 +152,17 @@ export function getColorInfo(hex: string, date: Date) {
         rgb: { r, g, b },
         hsl: { h, s: Math.round(s * 100), l: Math.round(l * 100) },
         date: date.toLocaleDateString('ja-JP', {
+            timeZone: JAPAN_TIME_ZONE,
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         }),
-        season: getSeason(date.getMonth() + 1),
+        season: getSeason(currentMonth + 1),
         monthlyBase: {
             hue: Math.round(currentMonthBase.h),
             saturation: Math.round(currentMonthBase.s * 100),
             lightness: Math.round(currentMonthBase.l * 100),
-            description: getMonthColorDescription(date.getMonth() + 1)
+            description: getMonthColorDescription(currentMonth + 1)
         }
     };
 }

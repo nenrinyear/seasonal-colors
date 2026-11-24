@@ -14,3 +14,11 @@ export function createColorUrl(hex: string): string {
 export function createTweetText(dateLabel: string, hex: string): string {
     return `${dateLabel}の色は #${getHexColorHashtag(hex)} です\n#${DAILY_COLOR_HASHTAG}`;
 }
+
+export function createTweetIntentUrl(dateLabel: string, hex: string): string {
+    const params = new URLSearchParams({
+        text: createTweetText(dateLabel, hex),
+        url: createColorUrl(hex),
+    });
+    return `https://twitter.com/intent/tweet?${params.toString()}`;
+}

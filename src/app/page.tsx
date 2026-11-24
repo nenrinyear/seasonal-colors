@@ -1,11 +1,12 @@
 // app/page.tsx (Server Component)
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import ColorDisplay from '@/components/ColorDisplay';
-import { getDailyColor } from '@/lib/dailyColor';
-import { getNowDate } from '@/lib/date';
+import { getDailyColor, getDailyColorByHex } from '@/lib/dailyColor';
 import { getColorInfo } from '@/lib/generateColor';
 import { normalizeHexColor } from '@/lib/hexColor';
-import { createColorPath } from '@/lib/share';
+import { createColorPath, createTweetIntentUrl } from '@/lib/share';
 
 export const revalidate = 86400; // 1 日キャッシュ
 
@@ -15,18 +16,18 @@ type PageProps = {
 };
 
 export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
-  const { date, hex, isPermalink } = await getPageColor(searchParams);
-  const colorInfo = getColorInfo(hex, date);
-  const title = isPermalink ? `${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
+  const { dateLabel, hex, isPermalink } = await getPageColor(searchParams);
+  const title = `${dateLabel}の色は${hex}`;
+  const description = '日付と季節から、その日の色を表示します。';
   const imageUrl = `/api/og?hex=${hex.slice(1)}`;
   const pageUrl = isPermalink ? createColorPath(hex) : '/';
 
   return {
     title,
-    description: '日付と季節から、その日の色を表示します。',
+    description,
     openGraph: {
       title,
-      description: '日付と季節から、その日の色を表示します。',
+      description,
       url: pageUrl,
       images: [
         {
@@ -40,29 +41,47 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
     twitter: {
       card: 'summary_large_image',
       title,
-      description: '日付と季節から、その日の色を表示します。',
+      description,
       images: [imageUrl],
     },
   };
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { date, hex } = await getPageColor(searchParams);
-  const colorInfo = getColorInfo(hex, date);
-  
-  return <ColorDisplay hex={hex} colorInfo={colorInfo} />;
+  const { dateLabel, hex, rgb, isPermalink } = await getPageColor(searchParams);
+
+  return (
+    <ColorDisplay
+      hex={hex}
+      rgb={rgb}
+      heading={isPermalink ? `${dateLabel}の色` : '今日の色'}
+      intentUrl={createTweetIntentUrl(dateLabel, hex)}
+      isPermalink={isPermalink}
+    />
+  );
 }
 
 async function getPageColor(searchParams?: PageProps['searchParams']) {
-  const requestedHex = normalizeHexColor(getSearchParamValue((await searchParams)?.hex));
-
-  if (requestedHex) {
-    return { date: getNowDate(), hex: requestedHex, isPermalink: true };
-  }
-
-  return { ...(await getDailyColor()), isPermalink: false };
+  const query = (await searchParams)?.hex;
+  return resolvePageColor(Array.isArray(query) ? query[0] : query);
 }
 
-function getSearchParamValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
+const resolvePageColor = cache(async (query: string | undefined) => {
+  if (query === undefined) {
+    const { date, hex } = await getDailyColor();
+    return toPageColor(hex, date, false);
+  }
+
+  const hex = normalizeHexColor(query);
+  if (!hex) notFound();
+
+  const color = await getDailyColorByHex(hex);
+  if (!color) notFound();
+
+  return toPageColor(color.hex, color.date, true);
+});
+
+function toPageColor(hex: string, date: Date, isPermalink: boolean) {
+  const { date: dateLabel, rgb } = getColorInfo(hex, date);
+  return { hex, dateLabel, rgb, isPermalink };
 }

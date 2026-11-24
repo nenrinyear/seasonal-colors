@@ -17,16 +17,19 @@ type PageProps = {
 export async function generateMetadata({ searchParams }: PageProps = {}): Promise<Metadata> {
   const { date, hex, isPermalink } = await getPageColor(searchParams);
   const colorInfo = getColorInfo(hex, date);
-  const title = isPermalink ? `${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
+  const title = isPermalink ? `共有された色 ${hex} | color.nenrin.me` : `${colorInfo.date}の色は${hex}`;
+  const description = isPermalink
+    ? '共有された色を表示します。今日の色も見ることができます。'
+    : '日付と季節から、その日の色を表示します。';
   const imageUrl = `/api/og?hex=${hex.slice(1)}`;
   const pageUrl = isPermalink ? createColorPath(hex) : '/';
 
   return {
     title,
-    description: '日付と季節から、その日の色を表示します。',
+    description,
     openGraph: {
       title,
-      description: '日付と季節から、その日の色を表示します。',
+      description,
       url: pageUrl,
       images: [
         {
@@ -40,7 +43,7 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
     twitter: {
       card: 'summary_large_image',
       title,
-      description: '日付と季節から、その日の色を表示します。',
+      description,
       images: [imageUrl],
     },
   };

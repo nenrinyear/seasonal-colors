@@ -11,6 +11,11 @@ export function createColorUrl(hex: string): string {
     return new URL(createColorPath(hex), SITE_URL).toString();
 }
 
-export function createTweetText(dateLabel: string, hex: string): string {
-    return `${dateLabel}の色は #${getHexColorHashtag(hex)} です\n#${DAILY_COLOR_HASHTAG}`;
+export function createTweetText(dateLabel: string | null, hex: string): string {
+    const colorTag = `#${getHexColorHashtag(hex)}`;
+    if (!dateLabel) {
+        return `共有された色は ${colorTag} です`;
+    }
+
+    return `${dateLabel}の色は ${colorTag} です\n#${DAILY_COLOR_HASHTAG}`;
 }

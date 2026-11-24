@@ -30,8 +30,8 @@ export default function ColorDisplay({ hex, colorInfo, isPermalink }: ColorDispl
     const isLightBackground = foregroundColor === '#171717';
 
     const postText = useMemo(() => {
-        return createTweetText(colorInfo.date, hex);
-    }, [colorInfo.date, hex]);
+        return createTweetText(isPermalink ? null : colorInfo.date, hex);
+    }, [colorInfo.date, hex, isPermalink]);
 
     const intentUrl = useMemo(() => {
         const params = new URLSearchParams({ text: postText, url: createColorUrl(hex) });

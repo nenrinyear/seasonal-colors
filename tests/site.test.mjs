@@ -62,11 +62,31 @@ after(async (context) => {
     if (workspace) await rm(workspace, { recursive: true, force: true });
 });
 
+function request(path) {
+    return fetch(new URL(path, baseUrl), { signal: AbortSignal.timeout(60_000) });
+}
+
+test('shows the same daily color on the home page and in the color API', async () => {
+    const page = await request('/');
+    assert.equal(page.status, 200);
+    const html = await page.text();
+    assert.match(html, /今日の色<\/h1>/);
+    const displayedHex = html.match(/(#[0-9a-f]{6})<\/button>/)?.[1];
+    assert.ok(displayedHex, 'the home page displays a HEX value');
+    assert.match(html, /<button\b[^>]*>Xにポスト<\/button>/);
+
+    const api = await request('/api/color');
+    assert.equal(api.status, 200);
+    assert.match(api.headers.get('content-type'), /^application\/json/);
+    assert.deepEqual(await api.json(), { hex: displayedHex });
+});
+
 test('shows all dates for a repeated HEX, with the latest date in share metadata', async () => {
-    const response = await fetch(`${baseUrl}/?hex=%23ABCDEF`, { signal: AbortSignal.timeout(60_000) });
+    const response = await request('/?hex=%23ABCDEF');
     assert.equal(response.status, 200);
     const html = await response.text();
 
+    assert.match(html, /<a\b[^>]*href="\/"[^>]*>今日の色を見る/);
     assert.match(html, /この色が出た日<\/h2>/);
     assert.match(html, /<li>2000年1月3日<\/li><li>2000年1月2日<\/li>/);
     assert.match(html, /property="og:title" content="2000年1月3日の色は#abcdef"/);
@@ -74,7 +94,7 @@ test('shows all dates for a repeated HEX, with the latest date in share metadata
 });
 
 test('keeps the single date in the heading for a legacy record', async () => {
-    const response = await fetch(`${baseUrl}/?hex=123456`, { signal: AbortSignal.timeout(60_000) });
+    const response = await request('/?hex=123456');
     assert.equal(response.status, 200);
     const html = await response.text();
 
@@ -82,8 +102,28 @@ test('keeps the single date in the heading for a legacy record', async () => {
     assert.doesNotMatch(html, /この色が出た日<\/h2>/);
 });
 
-test('returns 404 for a HEX that has no date', async () => {
-    const response = await fetch(`${baseUrl}/?hex=FEDCBA`, { signal: AbortSignal.timeout(60_000) });
-    assert.equal(response.status, 404);
-    assert.match(await response.text(), /色が見つかりませんでした/);
+test('returns 404 for unregistered, invalid, or empty HEX values', async () => {
+    for (const hex of ['FEDCBA', 'invalid', '']) {
+        const response = await request(`/?hex=${hex}`);
+        assert.equal(response.status, 404, `hex=${hex}`);
+        assert.match(await response.text(), /色が見つかりませんでした/);
+    }
+});
+
+test('serves the color preview as a 1200 by 630 PNG', async () => {
+    const response = await request('/api/og?hex=%23ABCDEF');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/png');
+    const png = Buffer.from(await response.arrayBuffer());
+    assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(png.readUInt32BE(16), 1200);
+    assert.equal(png.readUInt32BE(20), 630);
+});
+
+test('rejects invalid or missing HEX values in the preview API', async () => {
+    for (const path of ['/api/og', '/api/og?hex=invalid']) {
+        const response = await request(path);
+        assert.equal(response.status, 400, path);
+        assert.match((await response.json()).error, /6-digit color code/);
+    }
 });

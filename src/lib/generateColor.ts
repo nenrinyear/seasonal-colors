@@ -1,5 +1,5 @@
 import seedrandom from 'seedrandom';
-import { getJapanDateKey, JAPAN_TIME_ZONE } from './date';
+import { formatJapanDate, getJapanDateKey } from './date';
 
 export type HSL = { h: number; s: number; l: number };
 
@@ -151,12 +151,7 @@ export function getColorInfo(hex: string, date: Date) {
         hex,
         rgb: { r, g, b },
         hsl: { h, s: Math.round(s * 100), l: Math.round(l * 100) },
-        date: date.toLocaleDateString('ja-JP', {
-            timeZone: JAPAN_TIME_ZONE,
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }),
+        date: formatJapanDate(date),
         season: getSeason(currentMonth + 1),
         monthlyBase: {
             hue: Math.round(currentMonthBase.h),

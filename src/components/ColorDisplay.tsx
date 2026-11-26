@@ -7,11 +7,12 @@ interface ColorDisplayProps {
     hex: string;
     rgb: { r: number; g: number; b: number };
     heading: string;
+    occurrenceDates: string[];
     intentUrl: string;
     isPermalink: boolean;
 }
 
-export default function ColorDisplay({ hex, rgb, heading, intentUrl, isPermalink }: ColorDisplayProps) {
+export default function ColorDisplay({ hex, rgb, heading, occurrenceDates, intentUrl, isPermalink }: ColorDisplayProps) {
     const [copied, setCopied] = useState(false);
     const foregroundColor = getReadableTextColor(rgb);
     const isLightBackground = foregroundColor === '#171717';
@@ -68,6 +69,14 @@ export default function ColorDisplay({ hex, rgb, heading, intentUrl, isPermalink
                 }`}>
                     {copied ? 'コピーしました' : 'HEXをクリックしてコピー'}
                 </p>
+                {occurrenceDates.length > 1 && (
+                    <section className="mt-6 text-sm" aria-labelledby="occurrence-heading" style={{ color: foregroundColor }}>
+                        <h2 id="occurrence-heading" className="font-bold">この色が出た日</h2>
+                        <ul className="mt-2 space-y-1">
+                            {occurrenceDates.map((date) => <li key={date}>{date}</li>)}
+                        </ul>
+                    </section>
+                )}
                 {isPermalink && (
                     <Link
                         href="/"

@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import ColorDisplay from '@/components/ColorDisplay';
-import { getDailyColor, getDailyColorByHex } from '@/lib/dailyColor';
+import { getDailyColor, getDailyColorDatesByHex } from '@/lib/dailyColor';
+import { formatJapanDate } from '@/lib/date';
 import { getColorInfo } from '@/lib/generateColor';
 import { normalizeHexColor } from '@/lib/hexColor';
 import { createColorPath, createTweetIntentUrl } from '@/lib/share';
@@ -48,13 +49,16 @@ export async function generateMetadata({ searchParams }: PageProps = {}): Promis
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { dateLabel, hex, rgb, isPermalink } = await getPageColor(searchParams);
+  const { dateLabel, hex, rgb, isPermalink, occurrenceDates } = await getPageColor(searchParams);
+
+  const heading = isPermalink ? `${dateLabel}の色` : '今日の色';
 
   return (
     <ColorDisplay
       hex={hex}
       rgb={rgb}
-      heading={isPermalink ? `${dateLabel}の色` : '今日の色'}
+      heading={occurrenceDates.length > 1 ? '共有された色' : heading}
+      occurrenceDates={occurrenceDates}
       intentUrl={createTweetIntentUrl(dateLabel, hex)}
       isPermalink={isPermalink}
     />
@@ -75,13 +79,14 @@ const resolvePageColor = cache(async (query: string | undefined) => {
   const hex = normalizeHexColor(query);
   if (!hex) notFound();
 
-  const color = await getDailyColorByHex(hex);
-  if (!color) notFound();
+  const dates = await getDailyColorDatesByHex(hex);
+  const [latestDate] = dates;
+  if (!latestDate) notFound();
 
-  return toPageColor(color.hex, color.date, true);
+  return toPageColor(hex, latestDate, true, dates.map(formatJapanDate));
 });
 
-function toPageColor(hex: string, date: Date, isPermalink: boolean) {
+function toPageColor(hex: string, date: Date, isPermalink: boolean, occurrenceDates: string[] = []) {
   const { date: dateLabel, rgb } = getColorInfo(hex, date);
-  return { hex, dateLabel, rgb, isPermalink };
+  return { hex, dateLabel, rgb, isPermalink, occurrenceDates };
 }

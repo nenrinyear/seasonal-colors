@@ -29,3 +29,14 @@ export function getNowDate(): Date {
 export function parseJapanDateKey(dateKey: string): Date {
     return new Date(`${dateKey}T00:00:00+09:00`);
 }
+
+const japanDateLabelFormatter = new Intl.DateTimeFormat('ja-JP', {
+    timeZone: JAPAN_TIME_ZONE,
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+});
+
+export function formatJapanDate(date: Date): string {
+    return japanDateLabelFormatter.format(date);
+}
